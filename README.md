@@ -46,9 +46,11 @@ The project spans two environments. Scripts are numbered in run order.
 | `05_finetune_cm.py` | Fine-tune the head, evaluate at clip and patient level | trained model + predictions |
 
 > **Note:** `04` consumes `tensor_index.csv` from the coworker's `01_dicom_to_tensor`
-> step, which is not part of this repo. It expects a path column and a patient-ID
-> column — adjust `TENSOR_PATH_COL` / `TENSOR_PATIENT_COL` at the top of `04` if the
-> names differ.
+> step, which is not part of this repo. That index has only `dicom_file_path` and
+> `tensor_file_path` — **no patient ID** — so `04` recovers `PMBB_ID` by parsing it
+> out of the DICOM path (the `.../PMBBAXXXXXXXXXX/...` folder). Confirm `PMBB_ID_REGEX`
+> at the top of `04` matches the `PMBB_ID` format in `labeled_patients.csv`; `04`
+> prints a match count so you can check.
 
 ---
 

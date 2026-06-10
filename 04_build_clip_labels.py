@@ -23,10 +23,17 @@
 TARGET_COLUMN        = "HCM_PLP"     # HCM_PLP | DCM_PLP | any_CM_PLP | <any 0/1 column>
 
 # tensor index from 01_dicom_to_tensor — one row per clip.
-# Must contain a path column and a patient-ID column (rename below if different).
+# NOTE: 01 outputs only `dicom_file_path` + `tensor_file_path` (no patient ID).
+# We recover PMBB_ID by parsing it out of the DICOM path's folder structure
+# (.../PMBBAXXXXXXXXXX/.../file.dcm).
 TENSOR_INDEX_CSV     = "/Workspace/VermaLab/Sahil_EchoCV/tensor_index.csv"
+DICOM_PATH_COL       = "dicom_file_path"   # column holding the original DICOM path
 TENSOR_PATH_COL      = "tensor_file_path"
-TENSOR_PATIENT_COL   = "PMBB_ID"     # the patient ID column inside the tensor index
+
+# Regex that pulls the PMBB ID out of the DICOM path.
+# VERIFY this matches the PMBB_ID format in labeled_patients.csv exactly
+# (a printout below shows extracted IDs + how many matched the labels).
+PMBB_ID_REGEX        = r"(PMBB[A-Z]?\d+)"
 
 LABELS_CSV           = "/Workspace/VermaLab/Sahil_EchoCV/labeled_patients.csv"
 OUTPUT_CSV           = f"/Workspace/VermaLab/Sahil_EchoCV/clip_labels_{TARGET_COLUMN}.csv"
@@ -50,16 +57,28 @@ np.random.seed(SEED)
 tensors = pd.read_csv(TENSOR_INDEX_CSV)
 labels  = pd.read_csv(LABELS_CSV)
 
-# normalize column names so the join is clean
-tensors = tensors.rename(columns={
-    TENSOR_PATH_COL:    "tensor_file_path",
-    TENSOR_PATIENT_COL: "PMBB_ID",
-})
+tensors = tensors.rename(columns={TENSOR_PATH_COL: "tensor_file_path"})
+
+# recover PMBB_ID by parsing it out of the DICOM path
+tensors["PMBB_ID"] = tensors[DICOM_PATH_COL].str.extract(PMBB_ID_REGEX)
+
+n_unparsed = tensors["PMBB_ID"].isna().sum()
+if n_unparsed:
+    print(f"WARNING: {n_unparsed:,} clips — could not parse PMBB_ID from path; dropping them")
+    tensors = tensors.dropna(subset=["PMBB_ID"]).reset_index(drop=True)
 
 labels["label"] = labels[TARGET_COLUMN].astype(int)
 labels = labels[["PMBB_ID", "label"]]
 
-print(f"Clips in tensor index: {len(tensors):,}")
+# ── Sanity check: do the parsed IDs actually match the label IDs? ─────────────
+print("Example parsed PMBB_IDs:", tensors["PMBB_ID"].head(3).tolist())
+print("Example label PMBB_IDs: ", labels["PMBB_ID"].head(3).tolist())
+matched = tensors["PMBB_ID"].isin(set(labels["PMBB_ID"])).sum()
+print(f"Clips whose parsed ID matches a labeled patient: {matched:,} / {len(tensors):,}")
+if matched == 0:
+    raise ValueError("No parsed IDs matched labels — check PMBB_ID_REGEX vs labeled_patients.csv format")
+
+print(f"\nClips in tensor index: {len(tensors):,}")
 print(f"Patients with labels:  {len(labels):,}")
 
 # ────────────────────────────────────────────────────────────────────────────
