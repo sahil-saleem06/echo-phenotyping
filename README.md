@@ -111,12 +111,3 @@ Set at the top of the scripts:
 
 Train one target at a time; re-run with a different `TARGET_COLUMN` for each. Swap
 `ENCODER` to compare PanEcho vs EchoPrime on the same task.
-
----
-
-## Status
-
-The LPC steps (`01`, `02`) and `03_map_patients.py` are tested. The training
-chain (`04`, `05`) is built on the lab's working PanEcho fine-tuning code but is
-pending a first end-to-end run on the full DICOM transfer + GPU. The PanEcho path
-is the validated one; the EchoPrime encoder path should be verified on first run.
