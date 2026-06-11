@@ -198,11 +198,15 @@ def main():
         # ── Validation (clip-level AUC) ──────────────────────────────────────
         val_prob, val_true = predict(model, val_loader)
         val_auc = safe_auc(val_true, val_prob)
-        sched.step(val_auc)
+        sched.step(val_auc if not math.isnan(val_auc) else 0.0)
         print(f"Ep{epoch+1:2d}: val AUC {val_auc:.3f} | LR {opt.param_groups[0]['lr']:.2e}")
 
-        if val_auc > best_auc:
-            best_auc, no_improve = val_auc, 0
+        # always keep at least one checkpoint (so test never crashes if val AUC is
+        # nan — e.g. a single-class val fold); update it whenever val AUC improves
+        improved = (not math.isnan(val_auc)) and (val_auc > best_auc)
+        if improved or not CKPT_PATH.exists():
+            if improved:
+                best_auc, no_improve = val_auc, 0
             CKPT_PATH.parent.mkdir(parents=True, exist_ok=True)
             torch.save({"epoch": epoch + 1, "model_state_dict": model.state_dict(),
                         "val_auc": best_auc}, CKPT_PATH)
