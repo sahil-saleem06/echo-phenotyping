@@ -24,16 +24,20 @@ TARGET_COLUMN        = "HCM_PLP"     # HCM_PLP | DCM_PLP | any_CM_PLP | <any 0/1
 
 # tensor index from 01_dicom_to_tensor — one row per clip.
 # NOTE: 01 outputs only `dicom_file_path` + `tensor_file_path` (no patient ID).
-# We recover PMBB_ID by parsing it out of the DICOM path's folder structure
-# (.../PMBBAXXXXXXXXXX/.../file.dcm).
+# The DICOM folder carries the PMBB_RAD_ID (imaging ID, e.g. PMBBA + 10 digits),
+# which is a DIFFERENT id space than the labels' PMBB_ID (PMBB + 14 digits).
+# So we: parse PMBB_RAD_ID from the path -> map to PMBB_ID via the crosswalk
+# table -> join to labels on PMBB_ID.
 TENSOR_INDEX_CSV     = "/Workspace/VermaLab/Sahil_EchoCV/tensor_index.csv"
 DICOM_PATH_COL       = "dicom_file_path"   # column holding the original DICOM path
 TENSOR_PATH_COL      = "tensor_file_path"
 
-# Regex that pulls the PMBB ID out of the DICOM path.
-# VERIFY this matches the PMBB_ID format in labeled_patients.csv exactly
-# (a printout below shows extracted IDs + how many matched the labels).
-PMBB_ID_REGEX        = r"(PMBB[A-Z]?\d+)"
+# Crosswalk Databricks table with PMBB_RAD_ID <-> PMBB_ID (the one with EF/GLS/... cols).
+CROSSWALK_TABLE      = "biobank_analytics.dev.<crosswalk_table_name>"   # SET THIS
+
+# Regex that pulls the PMBB_RAD_ID out of the DICOM path (the imaging ID in the folder).
+# VERIFY it matches the PMBB_RAD_ID format you see in the folders.
+RAD_ID_REGEX         = r"(PMBBA\d+)"
 
 LABELS_CSV           = "/Workspace/VermaLab/Sahil_EchoCV/labeled_patients.csv"
 OUTPUT_CSV           = f"/Workspace/VermaLab/Sahil_EchoCV/clip_labels_{TARGET_COLUMN}.csv"
@@ -59,24 +63,31 @@ labels  = pd.read_csv(LABELS_CSV)
 
 tensors = tensors.rename(columns={TENSOR_PATH_COL: "tensor_file_path"})
 
-# recover PMBB_ID by parsing it out of the DICOM path
-tensors["PMBB_ID"] = tensors[DICOM_PATH_COL].str.extract(PMBB_ID_REGEX)
-
-n_unparsed = tensors["PMBB_ID"].isna().sum()
+# 1. parse PMBB_RAD_ID (imaging ID) out of the DICOM path
+tensors["PMBB_RAD_ID"] = tensors[DICOM_PATH_COL].str.extract(RAD_ID_REGEX)
+n_unparsed = tensors["PMBB_RAD_ID"].isna().sum()
 if n_unparsed:
-    print(f"WARNING: {n_unparsed:,} clips — could not parse PMBB_ID from path; dropping them")
-    tensors = tensors.dropna(subset=["PMBB_ID"]).reset_index(drop=True)
+    print(f"WARNING: {n_unparsed:,} clips — could not parse PMBB_RAD_ID from path; dropping them")
+    tensors = tensors.dropna(subset=["PMBB_RAD_ID"]).reset_index(drop=True)
+
+# 2. map PMBB_RAD_ID -> PMBB_ID via the crosswalk table
+crosswalk = (spark.table(CROSSWALK_TABLE)
+                  .select("PMBB_RAD_ID", "PMBB_ID")
+                  .dropDuplicates()
+                  .toPandas())
+tensors = tensors.merge(crosswalk, on="PMBB_RAD_ID", how="inner")
+print(f"Clips after RAD_ID -> PMBB_ID crosswalk: {len(tensors):,}")
+if len(tensors) == 0:
+    raise ValueError("Crosswalk matched nothing — check RAD_ID_REGEX and CROSSWALK_TABLE")
 
 labels["label"] = labels[TARGET_COLUMN].astype(int)
 labels = labels[["PMBB_ID", "label"]]
 
-# ── Sanity check: do the parsed IDs actually match the label IDs? ─────────────
-print("Example parsed PMBB_IDs:", tensors["PMBB_ID"].head(3).tolist())
-print("Example label PMBB_IDs: ", labels["PMBB_ID"].head(3).tolist())
+# 3. sanity check: do the mapped PMBB_IDs match labeled patients?
 matched = tensors["PMBB_ID"].isin(set(labels["PMBB_ID"])).sum()
-print(f"Clips whose parsed ID matches a labeled patient: {matched:,} / {len(tensors):,}")
+print(f"Clips whose PMBB_ID matches a labeled patient: {matched:,} / {len(tensors):,}")
 if matched == 0:
-    raise ValueError("No parsed IDs matched labels — check PMBB_ID_REGEX vs labeled_patients.csv format")
+    raise ValueError("No mapped PMBB_IDs matched labels — check ID spaces line up")
 
 print(f"\nClips in tensor index: {len(tensors):,}")
 print(f"Patients with labels:  {len(labels):,}")
