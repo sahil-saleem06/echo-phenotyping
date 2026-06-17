@@ -37,12 +37,11 @@ TENSOR_INDEX_CSV     = "/Volumes/biobank_analytics/pmbb_imaging_prepared/echo/ju
 DICOM_PATH_COL       = "dicom_file_path"   # column holding the original DICOM path
 TENSOR_PATH_COL      = "tensor_file_path"
 
-# Crosswalk Databricks table with PMBB_RAD_ID <-> PMBB_ID (the one with EF/GLS/... cols).
+# Crosswalk Databricks table with SUID <-> PMBB_ID (the one with EF/GLS/... cols).
 CROSSWALK_TABLE      = "biobank_analytics.pmbb_imaging_prepared.july25_echo_id_trait_map"
 
-# PMBB_RAD_ID is a numeric folder in the DICOM path (the one just above the dicoms/
-# report subfolders). Rather than a fragile regex (the path has other numbers too),
-# we identify it by matching path components against the known RAD_IDs in the crosswalk.
+# The DICOM path contains the SUID (study UID) as a folder. Rather than a regex,
+# we identify it by matching path components against the known SUIDs in the crosswalk.
 
 LABELS_CSV           = f"{PROJECT_DIR}/labeled_echo_patients.csv"
 OUTPUT_CSV           = f"{PROJECT_DIR}/clip_labels_{TARGET_COLUMN}.csv"
@@ -68,30 +67,30 @@ labels  = pd.read_csv(LABELS_CSV)
 
 tensors = tensors.rename(columns={TENSOR_PATH_COL: "tensor_file_path"})
 
-# 1. load the crosswalk (PMBB_RAD_ID <-> PMBB_ID)
+# 1. load the crosswalk (SUID <-> PMBB_ID)
 crosswalk = (spark.table(CROSSWALK_TABLE)
-                  .select("PMBB_RAD_ID", "PMBB_ID")
+                  .select("SUID", "PMBB_ID")
                   .dropDuplicates()
                   .toPandas())
-crosswalk["PMBB_RAD_ID"] = crosswalk["PMBB_RAD_ID"].astype(str)
-rad_id_set = set(crosswalk["PMBB_RAD_ID"])
+crosswalk["SUID"] = crosswalk["SUID"].astype(str)
+suid_set = set(crosswalk["SUID"])
 
-# 2. find each clip's PMBB_RAD_ID = the path component that is a known RAD_ID
-def extract_rad_id(path):
+# 2. find each clip's SUID = the path component that is a known SUID
+def extract_suid(path):
     for part in str(path).split("/"):
-        if part in rad_id_set:
+        if part in suid_set:
             return part
     return None
 
-tensors["PMBB_RAD_ID"] = tensors[DICOM_PATH_COL].apply(extract_rad_id)
-n_unmatched = tensors["PMBB_RAD_ID"].isna().sum()
+tensors["SUID"] = tensors[DICOM_PATH_COL].apply(extract_suid)
+n_unmatched = tensors["SUID"].isna().sum()
 if n_unmatched:
-    print(f"WARNING: {n_unmatched:,} clips — no RAD_ID in path matched the crosswalk; dropping them")
-    tensors = tensors.dropna(subset=["PMBB_RAD_ID"]).reset_index(drop=True)
+    print(f"WARNING: {n_unmatched:,} clips — no SUID in path matched the crosswalk; dropping them")
+    tensors = tensors.dropna(subset=["SUID"]).reset_index(drop=True)
 
-# 3. map PMBB_RAD_ID -> PMBB_ID
-tensors = tensors.merge(crosswalk, on="PMBB_RAD_ID", how="inner")
-print(f"Clips after RAD_ID -> PMBB_ID crosswalk: {len(tensors):,}")
+# 3. map SUID -> PMBB_ID
+tensors = tensors.merge(crosswalk, on="SUID", how="inner")
+print(f"Clips after SUID -> PMBB_ID crosswalk: {len(tensors):,}")
 if len(tensors) == 0:
     raise ValueError("Crosswalk matched nothing — check CROSSWALK_TABLE and the DICOM paths")
 
