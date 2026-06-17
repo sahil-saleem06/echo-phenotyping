@@ -28,7 +28,12 @@ TARGET_COLUMN        = "HCM_PLP"     # HCM_PLP | DCM_PLP | any_CM_PLP | <any 0/1
 # which is a DIFFERENT id space than the labels' PMBB_ID (PMBB + 14 digits).
 # So we: parse PMBB_RAD_ID from the path -> map to PMBB_ID via the crosswalk
 # table -> join to labels on PMBB_ID.
-TENSOR_INDEX_CSV     = "/Workspace/VermaLab/Sahil_EchoCV/tensor_index.csv"
+# All project CSVs/outputs live under this new project volume.
+# UC volume path is /Volumes/<catalog>/<schema>/<volume>/ — CONFIRM the volume name.
+PROJECT_DIR          = "/Volumes/biobank_analytics/vl_echo_genetic_cm_finetuning/files"
+
+# tensor index is an EXTERNAL input (coworker's 01 output) — set to its real location.
+TENSOR_INDEX_CSV     = "/Volumes/biobank_analytics/pmbb_imaging_prepared/echo/july25/video_tensors_test/tensor_index.csv"
 DICOM_PATH_COL       = "dicom_file_path"   # column holding the original DICOM path
 TENSOR_PATH_COL      = "tensor_file_path"
 
@@ -39,8 +44,8 @@ CROSSWALK_TABLE      = "biobank_analytics.dev.<crosswalk_table_name>"   # SET TH
 # report subfolders). Rather than a fragile regex (the path has other numbers too),
 # we identify it by matching path components against the known RAD_IDs in the crosswalk.
 
-LABELS_CSV           = "/Workspace/VermaLab/Sahil_EchoCV/labeled_patients.csv"
-OUTPUT_CSV           = f"/Workspace/VermaLab/Sahil_EchoCV/clip_labels_{TARGET_COLUMN}.csv"
+LABELS_CSV           = f"{PROJECT_DIR}/labeled_echo_patients.csv"
+OUTPUT_CSV           = f"{PROJECT_DIR}/clip_labels_{TARGET_COLUMN}.csv"
 
 # ── Negative handling — the on/off switch you asked for ──────────────────────
 DOWNSAMPLE_NEGATIVES = True          # True = trim negatives to a ratio; False = keep ALL negatives

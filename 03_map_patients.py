@@ -17,9 +17,13 @@
 # SECTION 0 │ Config
 # ────────────────────────────────────────────────────────────────────────────
 
-PATIENT_LIST  = "/Workspace/VermaLab/Sahil_EchoCV/filtered_patients.csv"
+# All project CSVs/outputs live under this new project volume.
+# UC volume path is /Volumes/<catalog>/<schema>/<volume>/ — CONFIRM the volume name.
+PROJECT_DIR   = "/Volumes/biobank_analytics/vl_echo_genetic_cm_finetuning/files"
+
+PATIENT_LIST  = f"{PROJECT_DIR}/positive_echo_patients.csv"
 ECHO_BASE_DIR = "/Volumes/biobank_analytics/pmbb_imaging_prepared/echo/july25/"
-OUTPUT_PATH   = "/Workspace/VermaLab/Sahil_EchoCV/patient_dicom_map.csv"
+OUTPUT_PATH   = f"{PROJECT_DIR}/patient_dicom_map.csv"
 
 # ────────────────────────────────────────────────────────────────────────────
 # SECTION 1 │ Load filtered patient list

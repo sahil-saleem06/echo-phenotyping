@@ -40,9 +40,12 @@ from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_sco
 # ========== EDIT THESE ======================================================
 TARGET          = "HCM_PLP"      # naming only — which label CLIP_CSV holds
 ENCODER         = "panecho"      # panecho (proven) | echoprime
-CLIP_CSV        = Path("/Workspace/VermaLab/Sahil_EchoCV/clip_labels_HCM_PLP.csv")
-CKPT_PATH       = Path(f"/Workspace/VermaLab/Sahil_EchoCV/finetune_{TARGET}_{ENCODER}/best.pth")
-PRED_PATH       = Path(f"/Workspace/VermaLab/Sahil_EchoCV/finetune_{TARGET}_{ENCODER}/test_predictions.csv")
+# All project CSVs/outputs live under this new project volume.
+# UC volume path is /Volumes/<catalog>/<schema>/<volume>/ — CONFIRM the volume name.
+PROJECT_DIR     = "/Volumes/biobank_analytics/vl_echo_genetic_cm_finetuning/files"
+CLIP_CSV        = Path(f"{PROJECT_DIR}/clip_labels_{TARGET}.csv")
+CKPT_PATH       = Path(f"{PROJECT_DIR}/finetune_{TARGET}_{ENCODER}/best.pth")
+PRED_PATH       = Path(f"{PROJECT_DIR}/finetune_{TARGET}_{ENCODER}/test_predictions.csv")
 
 FREEZE_BACKBONE = True           # True = train head only (safer for few positives)
                                  # False = full fine-tune at low LR (coworker recipe)
