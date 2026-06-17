@@ -38,7 +38,7 @@ DICOM_PATH_COL       = "dicom_file_path"   # column holding the original DICOM p
 TENSOR_PATH_COL      = "tensor_file_path"
 
 # Crosswalk Databricks table with PMBB_RAD_ID <-> PMBB_ID (the one with EF/GLS/... cols).
-CROSSWALK_TABLE      = "biobank_analytics.dev.<crosswalk_table_name>"   # SET THIS
+CROSSWALK_TABLE      = "biobank_analytics.pmbb_imaging_prepared.july25_echo_id_trait_map"
 
 # PMBB_RAD_ID is a numeric folder in the DICOM path (the one just above the dicoms/
 # report subfolders). Rather than a fragile regex (the path has other numbers too),
