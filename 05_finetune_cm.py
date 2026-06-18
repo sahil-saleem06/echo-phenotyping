@@ -42,7 +42,7 @@ TARGET          = "HCM_PLP"      # naming only — which label CLIP_CSV holds
 ENCODER         = "panecho"      # panecho (proven) | echoprime
 # All project CSVs/outputs live under this new project volume.
 # UC volume path is /Volumes/<catalog>/<schema>/<volume>/ — CONFIRM the volume name.
-PROJECT_DIR     = "/Volumes/biobank_analytics/vl_echo_genetic_cm_finetuning/files"
+PROJECT_DIR     = "/Volumes/biobank_analytics/vl_echo_genetic_cm_finetuning/data"
 CLIP_CSV        = Path(f"{PROJECT_DIR}/clip_labels_{TARGET}.csv")
 CKPT_PATH       = Path(f"{PROJECT_DIR}/finetune_{TARGET}_{ENCODER}/best.pth")
 PRED_PATH       = Path(f"{PROJECT_DIR}/finetune_{TARGET}_{ENCODER}/test_predictions.csv")

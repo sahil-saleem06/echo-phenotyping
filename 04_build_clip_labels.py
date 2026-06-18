@@ -30,7 +30,7 @@ TARGET_COLUMN        = "HCM_PLP"     # HCM_PLP | DCM_PLP | any_CM_PLP | <any 0/1
 # table -> join to labels on PMBB_ID.
 # All project CSVs/outputs live under this new project volume.
 # UC volume path is /Volumes/<catalog>/<schema>/<volume>/ — CONFIRM the volume name.
-PROJECT_DIR          = "/Volumes/biobank_analytics/vl_echo_genetic_cm_finetuning/files"
+PROJECT_DIR          = "/Volumes/biobank_analytics/vl_echo_genetic_cm_finetuning/data"
 
 # tensor index is an EXTERNAL input (coworker's 01 output) — set to its real location.
 TENSOR_INDEX_CSV     = "/Volumes/biobank_analytics/pmbb_imaging_prepared/echo/july25/video_tensors_test/tensor_index.csv"
