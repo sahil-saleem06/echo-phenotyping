@@ -94,6 +94,17 @@ print(f"Clips after SUID -> PMBB_ID crosswalk: {len(tensors):,}")
 if len(tensors) == 0:
     raise ValueError("Crosswalk matched nothing — check CROSSWALK_TABLE and the DICOM paths")
 
+# 3b. some tensors matched multiple DICOM paths (duplicate filenames across folders).
+# Drop any tensor that maps to >1 distinct patient (ambiguous — can't trust its label),
+# then collapse the same-patient duplicates to one row per tensor.
+per_tensor_patients = tensors.groupby("tensor_file_path")["PMBB_ID"].nunique()
+ambiguous = per_tensor_patients[per_tensor_patients > 1].index
+if len(ambiguous):
+    print(f"Dropping {len(ambiguous):,} tensors that map to >1 patient (ambiguous)")
+    tensors = tensors[~tensors["tensor_file_path"].isin(ambiguous)]
+tensors = tensors.drop_duplicates(subset="tensor_file_path").reset_index(drop=True)
+print(f"Clips after dedup (one row per tensor): {len(tensors):,}")
+
 labels["label"] = labels[TARGET_COLUMN].astype(int)
 labels = labels[["PMBB_ID", "label"]]
 
