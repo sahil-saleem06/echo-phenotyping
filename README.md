@@ -51,6 +51,13 @@ The project spans two environments. Scripts are numbered in run order.
 > you can confirm the linkage. (`build_tensor_index` and `01_dicom_to_tensor` live with
 > the Databricks notebooks, not in this repo.)
 
+**EchoPrime comparison arm.** PanEcho and EchoPrime normalize clips differently, so
+the PanEcho tensors can't be reused for EchoPrime. `dicom_to_tensor_echoprime` (with the
+Databricks notebooks) rebuilds the *same* clips using EchoPrime's own preprocessing
+(copied from the EchoPrime repo) into a separate `tensor_index_echoprime.csv`. Point
+`04`/`05` at that index and set `ENCODER = "echoprime"` to train the EchoPrime arm — same
+labels, same patients, only the backbone differs.
+
 ---
 
 ## How each script works
