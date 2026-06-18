@@ -40,17 +40,16 @@ The project spans two environments. Scripts are numbered in run order.
 
 | Script | Does | Output |
 |---|---|---|
-| `03_map_patients.py` | Find each patient's DICOM folder under the echo volume | `patient_dicom_map.csv` |
-| *(external)* `01_dicom_to_tensor` | Convert DICOM clips to `.pt` tensors — **coworker's script, prerequisite** | `tensor_index.csv` |
-| `04_build_clip_labels.py` | Join each clip tensor to its patient's 0/1 label; optional negative downsampling | `clip_labels_<TARGET>.csv` |
+| *(external)* `01_dicom_to_tensor` | Coworker's script: convert video DICOM clips to `.pt` tensors | tensors (no index) |
+| *(external)* `build_tensor_index` | Rebuild the tensor index by matching tensors to their DICOM paths | `tensor_index.csv` |
+| `04_build_clip_labels.py` | Link each clip to its patient and 0/1 label; optional negative downsampling | `clip_labels_<TARGET>.csv` |
 | `05_finetune_cm.py` | Fine-tune the head, evaluate at clip and patient level | trained model + predictions |
 
-> **Note:** `04` consumes `tensor_index.csv` from the coworker's `01_dicom_to_tensor`
-> step, which is not part of this repo. That index has only `dicom_file_path` and
-> `tensor_file_path` — **no patient ID** — so `04` recovers `PMBB_ID` by parsing it
-> out of the DICOM path (the `.../PMBBAXXXXXXXXXX/...` folder). Confirm `PMBB_ID_REGEX`
-> at the top of `04` matches the `PMBB_ID` format in `labeled_patients.csv`; `04`
-> prints a match count so you can check.
+> **Note:** the DICOM folders carry a `SUID` (study UID), *not* `PMBB_ID`. So `04`
+> finds each clip's `SUID` from its DICOM path, maps `SUID → PMBB_ID` via the crosswalk
+> table, then joins to the labels on `PMBB_ID`. It prints a match count at each hop so
+> you can confirm the linkage. (`build_tensor_index` and `01_dicom_to_tensor` live with
+> the Databricks notebooks, not in this repo.)
 
 ---
 
