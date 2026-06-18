@@ -47,7 +47,7 @@ LABELS_CSV           = f"{PROJECT_DIR}/labeled_echo_patients.csv"
 OUTPUT_CSV           = f"{PROJECT_DIR}/clip_labels_{TARGET_COLUMN}.csv"
 
 # ── Negative handling — the on/off switch you asked for ──────────────────────
-DOWNSAMPLE_NEGATIVES = True          # True = trim negatives to a ratio; False = keep ALL negatives
+DOWNSAMPLE_NEGATIVES = False         # False = keep ALL negatives (rely on pos_weight); True = trim to ratio
 NEG_RATIO            = 4             # negatives kept per positive (only used if downsampling)
 SEED                 = 42
 
