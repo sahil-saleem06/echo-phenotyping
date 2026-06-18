@@ -32,8 +32,8 @@ TARGET_COLUMN        = "HCM_PLP"     # HCM_PLP | DCM_PLP | any_CM_PLP | <any 0/1
 # UC volume path is /Volumes/<catalog>/<schema>/<volume>/ — CONFIRM the volume name.
 PROJECT_DIR          = "/Volumes/biobank_analytics/vl_echo_genetic_cm_finetuning/data"
 
-# tensor index is an EXTERNAL input (coworker's 01 output) — set to its real location.
-TENSOR_INDEX_CSV     = "/Volumes/biobank_analytics/pmbb_imaging_prepared/echo/july25/video_tensors_test/tensor_index.csv"
+# tensor index — rebuilt by build_tensor_index into the project volume.
+TENSOR_INDEX_CSV     = f"{PROJECT_DIR}/tensor_index.csv"
 DICOM_PATH_COL       = "dicom_file_path"   # column holding the original DICOM path
 TENSOR_PATH_COL      = "tensor_file_path"
 
