@@ -20,7 +20,7 @@
 # SECTION 0 │ Config
 # ────────────────────────────────────────────────────────────────────────────
 
-TARGET_COLUMN        = "HCM_PLP"     # HCM_PLP | DCM_PLP | any_CM_PLP | <any 0/1 column>
+TARGET_COLUMN        = "any_CM_PLP"  # HCM_PLP | DCM_PLP | any_CM_PLP | <any 0/1 column>
 
 # tensor index from 01_dicom_to_tensor — one row per clip.
 # NOTE: 01 outputs only `dicom_file_path` + `tensor_file_path` (no patient ID).
@@ -43,7 +43,7 @@ CROSSWALK_TABLE      = "biobank_analytics.pmbb_imaging_prepared.july25_echo_id_t
 # The DICOM path contains the SUID (study UID) as a folder. Rather than a regex,
 # we identify it by matching path components against the known SUIDs in the crosswalk.
 
-LABELS_CSV           = f"{PROJECT_DIR}/labeled_echo_patients.csv"
+LABELS_CSV           = f"{PROJECT_DIR}/unfiltered_echo_patients.csv"
 OUTPUT_CSV           = f"{PROJECT_DIR}/clip_labels_{TARGET_COLUMN}.csv"
 
 # ── Negative handling — the on/off switch you asked for ──────────────────────
